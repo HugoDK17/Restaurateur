@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐛 Debug Auth</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .debug-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #2d2d2d;
+      border: 2px solid #00ff00;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .debug-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #00ff00;
+      text-shadow: 0 0 10px #00ff00;
+    }
+
+    .debug-log {
+      background: #1e1e1e;
+      border: 1px solid #00ff00;
+      border-radius: 4px;
+      padding: 15px;
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 5px;
+      border-left: 3px solid #00ff00;
+      padding-left: 10px;
+    }
+
+    .log-entry.error {
+      color: #ff0000;
+      border-left-color: #ff0000;
+    }
+
+    .log-entry.warning {
+      color: #ffff00;
+      border-left-color: #ffff00;
+    }
+
+    .log-entry.success {
+      color: #00ff00;
+      border-left-color: #00ff00;
+    }
+
+    .log-entry.info {
+      color: #00ccff;
+      border-left-color: #00ccff;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #00ff00;
+      color: #1e1e1e;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+    }
+
+    button:hover {
+      background: #00cc00;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .info-box {
+      background: #2d2d2d;
+      border: 1px solid #00ccff;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 12px;
+    }
+
+    .info-box strong {
+      color: #00ccff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="debug-container">
+    <div class="debug-title">🐛 DEBUG AUTH - En direct</div>
+    
+    <div class="info-box">
+      <strong>💡 Instructions :</strong><br>
+      1. Ouvre cette page dans un nouvel onglet<br>
+      2. Connecte-toi depuis login.html<br>
+      3. Reviens ici et clique "ACTUALISER"<br>
+      4. Tu verras tous les logs en direct ! 📊
+    </div>
+
+    <div class="buttons">
+      <button onclick="refreshLogs()">🔄 ACTUALISER</button>
+      <button onclick="clearLogs()">🗑️ EFFACER</button>
+      <button onclick="goToLogin()">➡️ Aller à Login</button>
+      <button onclick="goToDashboard()">➡️ Aller au Dashboard</button>
+    </div>
+
+    <div class="debug-log" id="logContainer">
+      <div class="log-entry info">En attente des logs...</div>
+    </div>
+
+    <div class="info-box">
+      <strong>État utilisateur :</strong><br>
+      <span id="userStatus">Chargement...</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from './js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+    // Fonction pour afficher les logs
+    function displayLogs() {
+      const logContainer = document.getElementById('logContainer');
+      const logs = JSON.parse(localStorage.getItem('authDebugLogs') || '[]');
+
+      if (logs.length === 0) {
+        logContainer.innerHTML = '<div class="log-entry warning">⏳ Aucun log pour l\'instant...</div>';
+        return;
+      }
+
+      logContainer.innerHTML = logs.map(log => {
+        let className = 'log-entry';
+        if (log.includes('❌') || log.includes('ERREUR')) className += ' error';
+        else if (log.includes('⚠️')) className += ' warning';
+        else if (log.includes('✅')) className += ' success';
+        else if (log.includes('🔔') || log.includes('📍')) className += ' info';
+
+        return `<div class="${className}">${log}</div>`;
+      }).join('');
+
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // Affiche l'état utilisateur
+    onAuthStateChanged(auth, (user) => {
+      const userStatus = document.getElementById('userStatus');
+      if (user) {
+        userStatus.innerHTML = `<span style="color: #00ff00;">✅ Connecté : <strong>${user.email}</strong></span>`;
+      } else {
+        userStatus.innerHTML = '<span style="color: #ff0000;">❌ Non connecté</span>';
+      }
+    });
+
+    window.refreshLogs = function() {
+      displayLogs();
+    };
+
+    window.clearLogs = function() {
+      localStorage.removeItem('authDebugLogs');
+      displayLogs();
+    };
+
+    window.goToLogin = function() {
+      window.location.href = 'login.html';
+    };
+
+    window.goToDashboard = function() {
+      window.location.href = 'restaurant-dashboard.html';
+    };
+
+    // Affiche les logs au chargement
+    displayLogs();
+    setInterval(displayLogs, 500); // Actualise tous les 500ms
+  </script>
+
+</body>
+</html>

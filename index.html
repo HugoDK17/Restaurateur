@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - Restaurant Manager</title>
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-header h1 {
+      font-size: 2rem;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .login-header p {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2c3e50;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ecf0f1;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .error-message {
+      background: #fee;
+      color: #c33;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .link-container {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #ecf0f1;
+    }
+
+    .link-container p {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+
+    .link-container a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+
+    .link-container a:hover {
+      color: #764ba2;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      border: 3px solid #ecf0f1;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== CONTENEUR LOGIN ========== -->
+  <div class="login-container">
+    
+    <!-- HEADER -->
+    <div class="login-header">
+      <h1>🍽️ Restaurant Manager</h1>
+      <p>Connectez-vous à votre espace</p>
+    </div>
+
+    <!-- MESSAGE D'ERREUR -->
+    <div id="errorMessage" class="error-message"></div>
+
+    <!-- FORMULAIRE -->
+    <form id="loginForm">
+      
+      <!-- EMAIL -->
+      <div class="form-group">
+        <label for="email">📧 Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          placeholder="votre@email.com" 
+          required
+        >
+      </div>
+
+      <!-- MOT DE PASSE -->
+      <div class="form-group">
+        <label for="password">🔐 Mot de passe</label>
+        <input 
+          type="password" 
+          id="password" 
+          placeholder="••••••••" 
+          required
+        >
+      </div>
+
+      <!-- BOUTON CONNEXION -->
+      <button type="submit" class="btn-login" id="loginBtn">
+        Se connecter
+      </button>
+
+    </form>
+
+    <!-- CHARGEMENT -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="color: #7f8c8d; margin-top: 10px; font-size: 14px;">Connexion en cours...</p>
+    </div>
+
+    <!-- LIEN INSCRIPTION -->
+    <div class="link-container">
+      <p>
+        Vous n'avez pas de compte ? 
+        <a href="signup.html">Créer un compte</a>
+      </p>
+    </div>
+
+  </div>
+
+<!-- ========== SCRIPTS ========== -->
+<script type="module">
+  // Importer Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  // Config Firebase
+  const firebaseConfig = {
+      apiKey: "AIzaSyDYDBSeZr8fhE8KNLq7d4-8gnpmiFJP664",
+  authDomain: "table-call-20741.firebaseapp.com",
+  projectId: "table-call-20741",
+  storageBucket: "table-call-20741.firebasestorage.app",
+  messagingSenderId: "556709987942",
+  appId: "1:556709987942:web:ff317b8712c3f5843f4fa7",
+  measurementId: "G-F264YF4V91"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  window.db = getFirestore(app);
+  
+  console.log('✅ Firebase initialisé');
+
+  // ========== LOGIC LOGIN ==========
+  const loginForm = document.getElementById('loginForm');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const loginBtn = document.getElementById('loginBtn');
+  const errorMessage = document.getElementById('errorMessage');
+  const loading = document.getElementById('loading');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('📝 Formulaire soumis');
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    console.log('👤 Email:', email);
+
+    // Réinitialiser le message d'erreur
+    errorMessage.classList.remove('show');
+    errorMessage.textContent = '';
+
+    // Validation
+    if (!email || !password) {
+      showError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (password.length < 6) {
+      showError('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    // Désactiver le bouton et afficher le chargement
+    loginBtn.disabled = true;
+    loading.style.display = 'block';
+
+    try {
+      console.log('🚀 Tentative de connexion...');
+      
+      // Connexion Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('✅ Connexion réussie:', userCredential.user.email);
+
+      // Redirection
+      console.log('🔄 Redirection vers dashboard...');
+      setTimeout(() => {
+        window.location.href = 'restaurant-dashboard.html';
+      }, 500);
+      
+    } catch (error) {
+      console.log('❌ ERREUR:', error.code);
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          showError('Cet email n\'existe pas');
+          break;
+        case 'auth/wrong-password':
+          showError('Mot de passe incorrect');
+          break;
+        case 'auth/invalid-email':
+          showError('Email invalide');
+          break;
+        case 'auth/too-many-requests':
+          showError('Trop de tentatives. Réessayez plus tard');
+          break;
+        default:
+          showError('Erreur de connexion: ' + error.message);
+      }
+
+      loginBtn.disabled = false;
+      loading.style.display = 'none';
+    }
+  });
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.add('show');
+  }
+</script>
+
+</body>
+</html>

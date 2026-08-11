@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Restaurant Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success {
+            color: #27ae60;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📍 Inscription Restaurant</h1>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="secretKey">Clé secrète *</label>
+                <input type="password" id="secretKey" required placeholder="Rentre la clé">
+            </div>
+
+            <div class="form-group">
+                <label for="nom">Nom du Restaurant *</label>
+                <input type="text" id="nom" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email (Manager) *</label>
+                <input type="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Mot de passe *</label>
+                <input type="password" id="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Confirmer mot de passe *</label>
+                <input type="password" id="confirmPassword" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="adresse">Adresse</label>
+                <input type="text" id="adresse">
+            </div>
+            
+            <div class="form-group">
+                <label for="managerName">Ton nom (Manager) *</label>
+                <input type="text" id="managerName" required>
+            </div>
+            
+            <button type="submit">S'inscrire</button>
+            
+            <div id="message"></div>
+        </form>
+        
+        <div class="link">
+            Déjà inscrit ? <a href="login.html">Se connecter</a>
+        </div>
+    </div>
+
+<!-- ========== SCRIPTS ========== -->
+<script type="module">
+  // Importer Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  // Config Firebase
+  const firebaseConfig = {
+      apiKey: "AIzaSyDYDBSeZr8fhE8KNLq7d4-8gnpmiFJP664",
+  authDomain: "table-call-20741.firebaseapp.com",
+  projectId: "table-call-20741",
+  storageBucket: "table-call-20741.firebasestorage.app",
+  messagingSenderId: "556709987942",
+  appId: "1:556709987942:web:ff317b8712c3f5843f4fa7",
+  measurementId: "G-F264YF4V91"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  
+  console.log('✅ Firebase initialisé');
+
+  // ========== LOGIC SIGNUP ==========
+  const signupForm = document.getElementById('signupForm');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const restaurantNameInput = document.getElementById('restaurantName');
+  const signupBtn = document.getElementById('signupBtn');
+  const errorMessage = document.getElementById('errorMessage');
+  const loading = document.getElementById('loading');
+
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    const restaurantName = restaurantNameInput.value.trim();
+
+    // Réinitialiser le message d'erreur
+    errorMessage.classList.remove('show');
+    errorMessage.textContent = '';
+
+    // Validation
+    if (!email || !password || !confirmPassword || !restaurantName) {
+      showError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (password.length < 6) {
+      showError('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    // Désactiver le bouton et afficher le chargement
+    signupBtn.disabled = true;
+    loading.style.display = 'block';
+
+    try {
+      // Créer l'utilisateur
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      console.log('✅ Utilisateur créé:', user.email);
+
+      // Ajouter les données du restaurant à Firestore
+      await addDoc(collection(db, 'restaurants'), {
+        userId: user.uid,
+        name: restaurantName,
+        email: email,
+        createdAt: new Date(),
+        tables: [],
+        menu: []
+      });
+
+      console.log('✅ Restaurant créé dans Firestore');
+      console.log('🔄 Redirection vers dashboard...');
+      
+      // Redirection
+      window.location.href = 'restaurant-dashboard.html';
+      
+    } catch (error) {
+      // Gestion des erreurs
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          showError('Cet email est déjà utilisé');
+          break;
+        case 'auth/invalid-email':
+          showError('Email invalide');
+          break;
+        case 'auth/weak-password':
+          showError('Le mot de passe est trop faible');
+          break;
+        default:
+          showError('Erreur lors de l\'inscription: ' + error.message);
+      }
+
+      // Réactiver le bouton et masquer le chargement
+      signupBtn.disabled = false;
+      loading.style.display = 'none';
+    }
+  });
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.add('show');
+  }
+</script>
+
+<script type="module" src="js/auth.js"></script>
+</body>
+</html>

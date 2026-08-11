@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Restaurant - GesTable</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="logo">📱 GesTable</h1>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="switchPage('overview')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Aperçu</span>
+      </button>
+
+      <button class="nav-item" onclick="switchPage('plan-salle')">
+        <span class="nav-icon">📐</span>
+        <span class="nav-label">Plan de Salle</span>
+      </button>
+
+      <button class="nav-item" onclick="switchPage('tables')">
+        <span class="nav-icon">🍽️</span>
+        <span class="nav-label">Tables</span>
+      </button>
+
+      <button class="nav-item" onclick="switchPage('reservations')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Réservations</span>
+      </button>
+
+      <button class="nav-item" onclick="switchPage('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Paramètres</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">👤</div>
+        <div class="user-details">
+          <span id="userEmail" class="user-email">utilisateur@email.com</span>
+          <button class="btn-logout-small" onclick="logout()">Déconnexion</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="dashboard-main">
+
+    <!-- ========== HEADER ========== -->
+    <header class="dashboard-header">
+      <div class="header-left">
+        <h2 id="pageTitle">📊 Aperçu</h2>
+        <span id="pageSubtitle" class="page-subtitle">Gestion de votre restaurant</span>
+      </div>
+      
+      <div class="header-right">
+        <span id="restaurantName" class="restaurant-name">Mon Restaurant</span>
+      </div>
+    </header>
+
+    <!-- ========== CONTENU DYNAMIQUE ========== -->
+    <div class="dashboard-content">
+
+      <!-- ========== PAGE 1: APERÇU ========== -->
+      <div id="page-overview" class="page-content active">
+        
+        <!-- STATISTIQUES -->
+        <section class="section">
+          <h3 class="section-title">📊 Statistiques Rapides</h3>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">🍽️</div>
+              <div class="stat-content">
+                <div class="stat-label">Tables</div>
+                <div class="stat-number" id="statTables">0</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-content">
+                <div class="stat-label">Places Totales</div>
+                <div class="stat-number" id="statPlaces">0</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">📋</div>
+              <div class="stat-content">
+                <div class="stat-label">Réservations</div>
+                <div class="stat-number" id="statReservations">0</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-content">
+                <div class="stat-label">Clients Aujourd'hui</div>
+                <div class="stat-number" id="statClientsToday">0</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- APERÇU DU PLAN -->
+        <section class="section">
+          <h3 class="section-title">📐 Plan de Salle</h3>
+          <div class="plan-preview">
+            <canvas id="canvasPlanSalleDashboard" width="800" height="400"></canvas>
+            <div class="plan-stats">
+              <div class="stat-item">
+                <span class="stat-label">Tables:</span>
+                <span class="stat-value" id="totalTables">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Places:</span>
+                <span class="stat-value" id="totalPlaces">0</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RÉSERVATIONS AUJOURD'HUI -->
+        <section class="section">
+          <div class="section-header-flex">
+            <h3 class="section-title">📅 Réservations Aujourd'hui</h3>
+            <button class="btn-primary-small" onclick="openAddReservationModal()">➕ Nouvelle</button>
+          </div>
+          <div id="reservationsTodayList" class="reservations-list">
+            <div class="empty-state">Aucune réservation</div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ========== PAGE 2: PLAN DE SALLE ========== -->
+      <div id="page-plan-salle" class="page-content">
+        
+        <div class="plan-salle-full">
+          <div class="plan-header">
+            <h3>📐 Éditeur de Plan de Salle</h3>
+            <div class="plan-controls">
+              <button class="btn-secondary" onclick="reloadPlanSalle()">🔄 Recharger</button>
+              <button class="btn-success" onclick="savePlanSalleToFirebase()">💾 Enregistrer</button>
+            </div>
+          </div>
+
+          <div class="plan-editor-container">
+            <!-- SIDEBAR GAUCHE -->
+            <div class="plan-sidebar">
+              
+              <!-- Dimensions -->
+              <div class="sidebar-section">
+                <h4>📏 Dimensions</h4>
+                <div class="dimension-inputs">
+                  <div class="input-group">
+                    <label>Largeur (px)</label>
+                    <input type="number" id="salleWidth" value="1000" min="400" max="2000">
+                  </div>
+                  <div class="input-group">
+                    <label>Hauteur (px)</label>
+                    <input type="number" id="salleHeight" value="700" min="400" max="2000">
+                  </div>
+                  <button class="btn-primary" onclick="updateSalleDimensions()" style="width: 100%; margin-top: 10px;">
+                    ✓ Appliquer
+                  </button>
+                </div>
+              </div>
+
+              <!-- Ajouter des tables -->
+              <div class="sidebar-section">
+                <h4>➕ Ajouter des tables</h4>
+                <p style="font-size: 0.85rem; color: #999; margin-bottom: 12px;">
+                  Glissez-déposez sur le plan
+                </p>
+                
+                <div class="table-templates">
+                  <div class="table-template" draggable="true" data-capacite="2">
+                    <div class="template-icon">🪑🪑</div>
+                    <div class="template-label">2 places</div>
+                  </div>
+                  
+                  <div class="table-template" draggable="true" data-capacite="4">
+                    <div class="template-icon">🪑🪑🪑🪑</div>
+                    <div class="template-label">4 places</div>
+                  </div>
+                  
+                  <div class="table-template" draggable="true" data-capacite="6">
+                    <div class="template-icon">👥👥👥</div>
+                    <div class="template-label">6 places</div>
+                  </div>
+                  
+                  <div class="table-template" draggable="true" data-capacite="8">
+                    <div class="template-icon">👥👥👥👥</div>
+                    <div class="template-label">8 places</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Propriétés -->
+              <div class="sidebar-section">
+                <h4>⚙️ Propriétés</h4>
+                <div id="propertiesContent" class="properties-content">
+                  <div style="text-align: center; padding: 30px 0;">
+                    <p style="color: #999; font-size: 0.9rem;">👆 Cliquez sur une table</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- CANVAS CENTRE -->
+            <div class="plan-canvas-wrapper">
+              <canvas id="canvasPlanSalle" width="1000" height="700"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========== PAGE 3: TABLES ========== -->
+      <div id="page-tables" class="page-content">
+        
+        <div class="section-header-flex">
+          <h3 class="section-title">🍽️ Gestion des Tables</h3>
+          <button class="btn-primary" onclick="openAddTableModal()">➕ Ajouter une Table</button>
+        </div>
+
+        <div class="tables-grid" id="tablesGrid">
+          <div class="empty-state" style="grid-column: 1 / -1;">Aucune table</div>
+        </div>
+
+      </div>
+
+      <!-- ========== PAGE 4: RÉSERVATIONS ========== -->
+      <div id="page-reservations" class="page-content">
+        
+        <div class="section-header-flex">
+          <h3 class="section-title">📅 Réservations</h3>
+          <button class="btn-primary" onclick="openAddReservationModal()">➕ Nouvelle Réservation</button>
+        </div>
+
+        <div class="reservations-list" id="reservationsList">
+          <div class="empty-state">Aucune réservation</div>
+        </div>
+
+      </div>
+
+      <!-- ========== PAGE 5: PARAMÈTRES ========== -->
+      <div id="page-settings" class="page-content">
+        
+        <h3 class="section-title">⚙️ Paramètres</h3>
+
+        <div class="settings-grid">
+          
+          <!-- INFO RESTAURANT -->
+          <div class="settings-card">
+            <h4>🏢 Informations du Restaurant</h4>
+            <div class="settings-content">
+              <div class="setting-item">
+                <label>Nom du Restaurant</label>
+                <input type="text" id="restaurantNameInput" placeholder="Nom">
+                <button class="btn-secondary" onclick="saveRestaurantName()">Enregistrer</button>
+              </div>
+
+              <div class="setting-item">
+                <label>Adresse</label>
+                <input type="text" id="restaurantAddressInput" placeholder="Adresse">
+                <button class="btn-secondary" onclick="saveRestaurantInfo()">Enregistrer</button>
+              </div>
+
+              <div class="setting-item">
+                <label>Téléphone</label>
+                <input type="tel" id="restaurantPhoneInput" placeholder="Téléphone">
+                <button class="btn-secondary" onclick="saveRestaurantInfo()">Enregistrer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- THÈME -->
+          <div class="settings-card">
+            <h4>🎨 Thème et Apparence</h4>
+            <div class="settings-content">
+              <div class="setting-item">
+                <label>Couleur Primaire</label>
+                <input type="color" id="primaryColorInput" value="#6BA539">
+                <button class="btn-secondary" onclick="saveTheme()">Enregistrer</button>
+              </div>
+
+              <div class="setting-item">
+                <label>Couleur Secondaire</label>
+                <input type="color" id="secondaryColorInput" value="#95B46F">
+                <button class="btn-secondary" onclick="saveTheme()">Enregistrer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DONNÉES -->
+          <div class="settings-card">
+            <h4>💾 Données</h4>
+            <div class="settings-content">
+              <button class="btn-secondary" onclick="exportData()">📥 Exporter</button>
+              <button class="btn-secondary" onclick="importData()">📤 Importer</button>
+              <button class="btn-danger" onclick="deleteAllData()">🗑️ Supprimer</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========== MODAL : AJOUTER/ÉDITER TABLE ========== -->
+  <div id="modalTable" class="modal">
+    <div class="modal-content modal-small">
+      <div class="modal-header">
+        <h2 id="modalTableTitle">➕ Ajouter une Table</h2>
+        <button class="close-btn" onclick="closeTableModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Numéro de Table</label>
+          <input type="number" id="tableNumber" placeholder="Ex: 1, 2, 3..." min="1">
+        </div>
+
+        <div class="form-group">
+          <label>Capacité (nombre de places)</label>
+          <input type="number" id="tableCapacity" placeholder="Ex: 4, 6, 8..." min="1" max="20">
+        </div>
+
+        <div class="form-group">
+          <label>Couleur</label>
+          <input type="color" id="tableColor" value="#6BA539">
+        </div>
+
+        <div class="form-group">
+          <label>Tag NFC (optionnel)</label>
+          <input type="text" id="tableNFCTag" placeholder="Code NFC">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeTableModal()">✕ Annuler</button>
+        <button class="btn-primary" onclick="saveTable()">✓ Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL : AJOUTER RÉSERVATION ========== -->
+  <div id="modalReservation" class="modal">
+    <div class="modal-content modal-small">
+      <div class="modal-header">
+        <h2>➕ Nouvelle Réservation</h2>
+        <button class="close-btn" onclick="closeReservationModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nom du Client</label>
+          <input type="text" id="clientName" placeholder="Nom">
+        </div>
+
+        <div class="form-group">
+          <label>Nombre de Personnes</label>
+          <input type="number" id="clientPeople" placeholder="Nombre" min="1" max="20">
+        </div>
+
+        <div class="form-group">
+          <label>Date et Heure</label>
+          <input type="datetime-local" id="reservationDateTime">
+        </div>
+
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" id="clientPhone" placeholder="Téléphone">
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="reservationNotes" placeholder="Notes spéciales..." rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeReservationModal()">✕ Annuler</button>
+        <button class="btn-primary" onclick="saveReservation()">✓ Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+<!-- ========== SCRIPTS ========== -->
+<script type="module">
+  // Importer Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  // Config Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYDBSeZr8fhE8KNLq7d4-8gnpmiFJP664",
+  authDomain: "table-call-20741.firebaseapp.com",
+  projectId: "table-call-20741",
+  storageBucket: "table-call-20741.firebasestorage.app",
+  messagingSenderId: "556709987942",
+  appId: "1:556709987942:web:ff317b8712c3f5843f4fa7",
+  measurementId: "G-F264YF4V91"
+  };
+
+  // Initialiser Firebase
+  const app = initializeApp(firebaseConfig);
+  window.auth = getAuth(app);
+  window.db = getFirestore(app);
+  
+  console.log('✅ Firebase initialisé');
+</script>
+
+<script type="module" src="js/auth.js"></script>
+<script type="module" src="js/plan-salle.js"></script>
+<script type="module" src="js/dashboard-restaurant.js"></script>
+<script type="module">
+  // Initialiser Firebase d'abord
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+      apiKey: "AIzaSyDYDBSeZr8fhE8KNLq7d4-8gnpmiFJP664",
+  authDomain: "table-call-20741.firebaseapp.com",
+  projectId: "table-call-20741",
+  storageBucket: "table-call-20741.firebasestorage.app",
+  messagingSenderId: "556709987942",
+  appId: "1:556709987942:web:ff317b8712c3f5843f4fa7",
+  measurementId: "G-F264YF4V91"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.auth = getAuth(app);
+  window.db = getFirestore(app);
+  
+  console.log('✅ Firebase init sur dashboard');
+</script>
+
+<!-- Ensuite charger la vérification auth -->
+<script type="module" src="js/dashboard-auth.js"></script>
+
+</body>
+</html>
